@@ -1,65 +1,46 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  FaSearch,
-  FaUser,
-  FaIdCard,
-  FaEnvelope,
-  FaPhone,
-  FaChevronRight,
-  FaEnvelopeOpen,
-} from 'react-icons/fa';
+import { FaSearch, FaUser, FaIdCard, FaEnvelope, FaPhone, FaChevronRight, FaArrowLeft } from 'react-icons/fa';
+
+const fade   = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: .35 } } };
+const stagger = { visible: { transition: { staggerChildren: .07 } } };
 
 const ShareholderCheck = ({ setShareholderData }) => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [results, setResults] = useState(null);
+  const [searchTerm, setSearchTerm]             = useState('');
+  const [loading, setLoading]                   = useState(false);
+  const [error, setError]                       = useState('');
+  const [results, setResults]                   = useState(null);
   const [selectedShareholder, setSelectedShareholder] = useState(null);
-  const [editedEmail, setEditedEmail] = useState('');
-  const [editedPhone, setEditedPhone] = useState('');
+  const [editedEmail, setEditedEmail]           = useState('');
+  const [editedPhone, setEditedPhone]           = useState('');
+
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchTerm.trim()) return;
+    setError(''); setLoading(true); setResults(null); setSelectedShareholder(null);
+    setEditedEmail(''); setEditedPhone('');
 
-    setError('');
-    setLoading(true);
-    setResults(null);
-    setSelectedShareholder(null);
-    setEditedEmail('');
-    setEditedPhone('');
-
-
-
-
-    
     try {
-      // const API_URL= process.env.REACT_APP_API_URL
-      const response = await fetch(`https://api.lasaco.apel.com.ng/api/check-shareholder`, {
+      const res  = await fetch('https://api.lasaco.apel.com.ng/api/check-shareholder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ searchTerm }),
       });
+      const data = await res.json();
 
-      const data = await response.json();
-
-      if (data.status === 'account_match') {
-        setSelectedShareholder(data.shareholder);
-          setEditedEmail(data.shareholder.email || '');
-          setEditedPhone(data.shareholder.phone_number || '');
-      } else if (data.status === 'name_matches') {
-        setResults(data.shareholders);
-      } else if (data.status === 'chn_match') {
+      if (data.status === 'account_match' || data.status === 'chn_match') {
         setSelectedShareholder(data.shareholder);
         setEditedEmail(data.shareholder.email || '');
-        setEditedPhone(data.shareholder.phone_number || ''); // Initialize edited email
+        setEditedPhone(data.shareholder.phone_number || '');
+      } else if (data.status === 'name_matches') {
+        setResults(data.shareholders);
       } else {
         setError(data.message || 'No matching shareholders found');
       }
-    } catch (err) {
-      setError('Failed to connect to server');
+    } catch {
+      setError('Failed to connect to server. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -67,350 +48,234 @@ const ShareholderCheck = ({ setShareholderData }) => {
 
   const handleRegister = async () => {
     if (!selectedShareholder) return;
+    if (!editedEmail && !editedPhone && !selectedShareholder.email && !selectedShareholder.phone_number) {
+      setError('Please provide an email address or phone number'); return;
+    }
+    if (editedPhone && !/^(\+234|0)[789]\d{9}$/.test(editedPhone)) {
+      setError('Please enter a valid Nigerian phone number (starting with 0 or +234)'); return;
+    }
+    if (editedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editedEmail)) {
+      setError('Please enter a valid email address'); return;
+    }
 
-    setLoading(true);
+    setLoading(true); setError('');
+    const updated = {
+      ...selectedShareholder,
+      email:        editedEmail        || selectedShareholder.email,
+      phone_number: editedPhone        || selectedShareholder.phone_number,
+    };
+
     try {
-  // Validate at least one contact method is provided
-  if (!editedEmail && !editedPhone && !selectedShareholder.email && !selectedShareholder.phone_number) {
-    setError('Please provide either an email or phone number');
-    setLoading(false);
-    return;
-  }
-   
-        // Validate phone number format if provided
-        if (editedPhone) {
-          const phoneRegex = /^(\+234|0)[789]\d{9}$/;
-          if (!phoneRegex.test(editedPhone)) {
-            setError('Please enter a valid Nigerian phone number (start with 0 or +234)');
-            setLoading(false);
-            return;
-          }
-        }
-
-  // Create updated shareholder data with the edited email
-      const updatedShareholder = {
-        ...selectedShareholder,
-        email: editedEmail || selectedShareholder.email,
-        phone_number: editedPhone || selectedShareholder.phone_number
-      };
-
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-if (editedEmail && !emailRegex.test(editedEmail)) {
-  setError('Please enter a valid email address');
-  return;
-}
-
-       console.log('Sending to backend:', {
-        acno: updatedShareholder.acno,
-        email: updatedShareholder.email,
-        phone_number: updatedShareholder.phone_number,
-        chn: updatedShareholder.chn,
-      });
-      const response = await fetch('https://api.lasaco.apel.com.ng/api/send-confirmation', {
+      const res  = await fetch('https://api.lasaco.apel.com.ng/api/send-confirmation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          acno: updatedShareholder.acno,
-          email: updatedShareholder.email,
-          phone_number: updatedShareholder.phone_number,
-          chn: updatedShareholder.chn,
-        }),
-      })
-
-      const data = await response.json();
-      if (response.ok) {
-        setShareholderData(updatedShareholder);
+        body: JSON.stringify({ acno: updated.acno, email: updated.email, phone_number: updated.phone_number, chn: updated.chn }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setShareholderData(updated);
         navigate('/shareholder/presuccess');
       } else {
-        setError(data.error || 'Registration failed or This shareholder is already registered');
+        setError(data.error || 'Registration failed or shareholder already registered');
       }
-    } catch (err) {
-      setError('Failed to connect to server');
+    } catch {
+      setError('Failed to connect to server. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const resetSearch = () => {
+  const reset = () => { setResults(null); setSelectedShareholder(null); setSearchTerm(''); setError(''); };
+
+  const selectFromList = (sh) => {
+    setSelectedShareholder(sh);
+    setEditedEmail(sh.email || '');
+    setEditedPhone(sh.phone_number || '');
     setResults(null);
-    setSelectedShareholder(null);
-    setSearchTerm('');
-  };
-
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        when: "beforeChildren",
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 100
-      }
-    }
-  };
-
-  const fadeIn = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 0.5 } }
-  };
-
-  const scaleUp = {
-    hidden: { scale: 0.95, opacity: 0 },
-    visible: { scale: 1, opacity: 1, transition: { type: "spring", stiffness: 200 } }
   };
 
   return (
-    <motion.div 
-      className="verification-container"
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-    >
-      <motion.div className="verification-form" variants={fadeIn}>
+    <div className="verification-container">
+      <div className="verification-form">
         <AnimatePresence mode="wait">
-          {!selectedShareholder && !results ? (
-            <motion.div
-              key="search-form"
-              initial="hidden"
-              animate="visible"
-              exit={{ opacity: 0 }}
-              variants={containerVariants}
-            >
-              <motion.form onSubmit={handleSearch} variants={itemVariants}>
-                <motion.h2 variants={itemVariants}>LASACO ASSURANCE PLC EGM REGISTRATION</motion.h2>
-                <motion.p className="form-description" variants={itemVariants}>
-                  Search by name, CHN or Registrars account number
-                </motion.p>
- <motion.p className="form-description" variants={itemVariants}  style={{ color: 'red' }} >
-                  Kindly note that you need to register and have a valid email or phone number to be able to attend the EGM
-                </motion.p>
-                <motion.div className="form-group" variants={itemVariants}>
-                  <div className="input-with-icon">
-                    <FaSearch className="input-icon" />
+
+          {/* ── Search ── */}
+          {!selectedShareholder && !results && (
+            <motion.div key="search" variants={stagger} initial="hidden" animate="visible" exit={{ opacity: 0 }}>
+              <motion.p variants={fade} className="page-title">Skyway Aviation Handling Company PLC</motion.p>
+              <motion.p variants={fade} style={{ textAlign:'left', fontWeight:600, color:'var(--brand)', marginBottom:'.25rem', fontSize:'.9rem' }}>
+                AGM REGISTRATION
+              </motion.p>
+              <motion.p variants={fade} className="page-subtitle">
+                Search by name, CHN or registrar account number
+              </motion.p>
+
+              <motion.div variants={fade} className="alert alert-warning" style={{ marginBottom:'1.25rem' }}>
+                You must have a valid email or phone number on record to attend the AGM.
+              </motion.div>
+
+              <form onSubmit={handleSearch}>
+                <motion.div variants={fade} className="form-group">
+                  <label className="label-text">Search Shareholder</label>
+                  <div className="input-wrap search-wrap">
+                    <span className="input-icon"><FaSearch /></span>
                     <input
                       type="text"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder="Name or Account Number"
+                      placeholder="Name, CHN or Account Number"
                       required
                     />
                   </div>
                 </motion.div>
 
-                <motion.button 
-                  type="submit" 
+                <motion.button
+                  variants={fade}
+                  type="submit"
+                  className="submit-btn"
                   disabled={loading || !searchTerm.trim()}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  variants={itemVariants}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: .98 }}
                 >
-                  {loading ? (
-                    <motion.span 
-                      className="spinner"
-                      animate={{ rotate: 360 }}
-                      transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                    />
-                  ) : (
-                    <>
-                      <FaSearch /> Search
-                    </>
-                  )}
+                  {loading ? <span className="spinner" /> : <><FaSearch /> Search</>}
                 </motion.button>
-              </motion.form>
+              </form>
 
-              <AnimatePresence>
-                {error && (
-                  <motion.p 
-                    className="error"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    {error}
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          ) : selectedShareholder ? (
-            <motion.div
-              key="verification-success"
-              className="verification-success"
-              initial="hidden"
-              animate="visible"
-              variants={scaleUp}
-            >
-              <motion.h2 variants={itemVariants}>Verify Your Details</motion.h2>
-                <motion.p variants={itemVariants} style={{ color: 'red' }}>Please note that your email address and Phone Number displayed is exactly what we have on our record.</motion.p> 
-             <motion.p variants={itemVariants} style={{ color: 'red' }}>  You can fill in your email address or Phone Number  if you do not have one on our record
+              {error && (
+                <motion.p className="error" initial={{ opacity:0, y:-6 }} animate={{ opacity:1, y:0 }}>
+                  {error}
                 </motion.p>
-
-              <motion.div 
-                className="shareholder-details"
-                variants={containerVariants}
-              >
-                <motion.div variants={itemVariants}><FaUser /> <b>Name:</b>     {selectedShareholder.name}</motion.div>
-                <br></br>
-                <motion.div variants={itemVariants}><FaIdCard /><b> Account No:     </b>{selectedShareholder.acno}</motion.div>
-
-                <br></br>
-                <motion.div variants={itemVariants} className="email-input-container"><FaEnvelope />
-            <b> Email:</b>     
-              {selectedShareholder.email ? (
-                <span>{selectedShareholder.email}</span>
-              ) : (
-                <input
-                  type="email"
-                  value={editedEmail}
-                  onChange={(e) => setEditedEmail(e.target.value)}
-                  placeholder="Enter email Address"
-                  required
-                  className="email-input"
-                />
               )}
             </motion.div>
-            <br></br>
-            <motion.div variants={itemVariants} className="phone-input-container">
-    <FaPhone />
-    <b> Phone:</b>
-    {selectedShareholder.phone_number ? (
-      <span>{selectedShareholder.phone_number}</span>
-    ) : (
-      <input
-        type="tel"
-        value={editedPhone}
-        onChange={(e) => setEditedPhone(e.target.value)}
-        placeholder="Enter phone Number"
-        required
-        className="phone-input"
-      />
-    )}
-  </motion.div>
-              </motion.div>
+          )}
 
-              <motion.div 
-                className="action-buttons"
-                variants={containerVariants}
-              >
-                <motion.button 
-                  onClick={resetSearch} 
-                  className="secondary-btn"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  variants={itemVariants}
-                >
-                  Back to Search
-                </motion.button>
-                <motion.button 
-                  onClick={handleRegister} 
-                  disabled={loading}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  variants={itemVariants}
-                >
-                  {loading ? (
-                    <motion.span 
-                      className="spinner"
-                      animate={{ rotate: 360 }}
-                      transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                    />
-                  ) : (
-                    'Confirm Registration'
-                  )}
-                </motion.button>
-              </motion.div>
+          {/* ── Results list ── */}
+          {results && !selectedShareholder && (
+            <motion.div key="results" variants={stagger} initial="hidden" animate="visible" exit={{ opacity:0 }}>
+              <motion.p variants={fade} className="page-title">Select Your Account</motion.p>
+              <motion.p variants={fade} className="page-subtitle">
+                {results.length} match{results.length !== 1 ? 'es' : ''} found — select the correct account
+              </motion.p>
 
-              <AnimatePresence>
-                {error && (
-                  <motion.p 
-                    className="error"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    {error}
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="results-container"
-              className="results-container"
-              initial="hidden"
-              animate="visible"
-              variants={fadeIn}
-            >
-              <motion.h2 variants={itemVariants}>Select Your Account</motion.h2>
-              <motion.div 
-                className="results-table"
-                variants={containerVariants}
-              >
-                <motion.div 
-                  className="table-container"
-                  variants={scaleUp}
-                >
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Name</th>
-                        <th>Account No</th>
-                        <th>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {results.map((sh, index) => (
-                        <motion.tr 
-                          key={sh.acno}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          whileHover={{ scale: 1.01 }}
-                        >
-                          <td>{sh.name}</td>
-                          <td>{sh.acno}</td>
-                          <td>
-                            <motion.button
-                              onClick={() => setSelectedShareholder(sh)}
-                              className="select-btn"
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              Select <FaChevronRight />
-                            </motion.button>
-                          </td>
-                        </motion.tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </motion.div>
-              </motion.div>
+              <div className="results-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Account No</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.map((sh, i) => (
+                      <motion.tr
+                        key={sh.acno}
+                        initial={{ opacity:0, y:6 }}
+                        animate={{ opacity:1, y:0 }}
+                        transition={{ delay: i * .04 }}
+                      >
+                        <td>{sh.name}</td>
+                        <td>{sh.acno}</td>
+                        <td>
+                          <button className="select-btn" onClick={() => selectFromList(sh)}>
+                            Select <FaChevronRight />
+                          </button>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-              <motion.button 
-                onClick={resetSearch} 
-                className="secondary-btn"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                variants={itemVariants}
-              >
-                Back to Search
-              </motion.button>
+              <button className="secondary-btn" onClick={reset} style={{ marginTop:'.75rem' }}>
+                <FaArrowLeft /> Back to Search
+              </button>
             </motion.div>
           )}
+
+          {/* ── Verify details ── */}
+          {selectedShareholder && (
+            <motion.div key="verify" variants={stagger} initial="hidden" animate="visible" exit={{ opacity:0 }}>
+              <motion.p variants={fade} className="page-title">Verify Your Details</motion.p>
+              <motion.p variants={fade} className="page-subtitle">
+                Confirm the details below match your records. Add contact info if missing.
+              </motion.p>
+
+              <motion.div variants={fade} className="alert alert-info">
+                Your email and phone number displayed are exactly what we have on file. Fill in any missing fields.
+              </motion.div>
+
+              <motion.div variants={fade} className="shareholder-details">
+                <div className="detail-row">
+                  <FaUser className="detail-icon" />
+                  <span className="detail-label">Name</span>
+                  <span className="detail-value">{selectedShareholder.name}</span>
+                </div>
+
+                <div className="detail-row">
+                  <FaIdCard className="detail-icon" />
+                  <span className="detail-label">Account No</span>
+                  <span className="detail-value">{selectedShareholder.acno}</span>
+                </div>
+
+                <div className="detail-row">
+                  <FaEnvelope className="detail-icon" />
+                  <span className="detail-label">Email</span>
+                  {selectedShareholder.email
+                    ? <span className="detail-value">{selectedShareholder.email}</span>
+                    : <input
+                        type="email"
+                        className="inline-input"
+                        value={editedEmail}
+                        onChange={(e) => setEditedEmail(e.target.value)}
+                        placeholder="Enter email address"
+                      />
+                  }
+                </div>
+
+                <div className="detail-row">
+                  <FaPhone className="detail-icon" />
+                  <span className="detail-label">Phone</span>
+                  {selectedShareholder.phone_number
+                    ? <span className="detail-value">{selectedShareholder.phone_number}</span>
+                    : <input
+                        type="tel"
+                        className="inline-input"
+                        value={editedPhone}
+                        onChange={(e) => setEditedPhone(e.target.value)}
+                        placeholder="e.g. 08012345678"
+                      />
+                  }
+                </div>
+              </motion.div>
+
+              {error && (
+                <motion.p className="error" initial={{ opacity:0, y:-6 }} animate={{ opacity:1, y:0 }}>
+                  {error}
+                </motion.p>
+              )}
+
+              <motion.div variants={fade} className="action-buttons">
+                <button className="secondary-btn" onClick={reset}>
+                  <FaArrowLeft /> Back
+                </button>
+                <motion.button
+                  className="submit-btn"
+                  style={{ flex:1, margin:0 }}
+                  onClick={handleRegister}
+                  disabled={loading}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: .98 }}
+                >
+                  {loading ? <span className="spinner" /> : 'Confirm Registration'}
+                </motion.button>
+              </motion.div>
+            </motion.div>
+          )}
+
         </AnimatePresence>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 };
 

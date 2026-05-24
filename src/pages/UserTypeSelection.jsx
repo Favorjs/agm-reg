@@ -1,6 +1,22 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { FaBuilding, FaUserTie, FaCheck } from 'react-icons/fa';
+
+const options = [
+  {
+    value: 'shareholder',
+    icon: <FaBuilding />,
+    label: 'Shareholder',
+    desc: 'I own shares in Skyway Aviation Handling Company PLC',
+  },
+  {
+    value: 'guest',
+    icon: <FaUserTie />,
+    label: 'Guest / Regulator / Observer',
+    desc: 'Attending as a Guest, Regulator, or External Auditor',
+  },
+];
 
 const UserTypeSelection = () => {
   const [userType, setUserType] = useState('');
@@ -9,58 +25,47 @@ const UserTypeSelection = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!userType) {
-      setError('Please select your user type');
-      return;
-    }
-    
-    if (userType === 'shareholder') {
-      navigate('/shareholder');
-    } else {
-      navigate('/guest');
-    }
+    if (!userType) { setError('Please select a registration type to continue'); return; }
+    navigate(userType === 'shareholder' ? '/shareholder' : '/guest');
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="user-type-container"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
     >
       <div className="user-type-card">
-        <h2>LASACO ASSURANCE PLC EGM REGISTRATION</h2>
-        <p>Please select your registration type:</p>
-        
+        <p className="page-title">Skyway Aviation Handling Company PLC</p>
+        <p style={{ textAlign: 'center', fontWeight: 600, color: 'var(--brand)', marginBottom: '.25rem', fontSize: '.9rem' }}>
+          AGM REGISTRATION
+        </p>
+        <p className="page-subtitle">Select your registration type to continue</p>
+
         {error && <p className="error-message">{error}</p>}
-        
+
         <form onSubmit={handleSubmit}>
-          <div className="radio-group">
-            <label>
-              <input
-                type="radio"
-                name="userType"
-                value="shareholder"
-                checked={userType === 'shareholder'}
-                onChange={() => setUserType('shareholder')}
-              />
-              <span>Shareholder</span>
-              <p className="description">I own shares in LASACO ASSURANCE PLC</p>
-            </label>
-            
-            <label>
-              <input
-                type="radio"
-                name="userType"
-                value="guest"
-                checked={userType === 'guest'}
-                onChange={() => setUserType('guest')}
-              />
-              <span>Guest/Regulator/Observer</span>
-              <p className="description">I'm attending as a Guest, Regulator, External Auditor </p>
-            </label>
+          <div className="option-cards">
+            {options.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                className={`option-card${userType === opt.value ? ' selected' : ''}`}
+                onClick={() => { setUserType(opt.value); setError(''); }}
+              >
+                <span className="option-card-icon">{opt.icon}</span>
+                <span className="option-card-text">
+                  <span className="option-card-label">{opt.label}</span>
+                  <span className="option-card-desc">{opt.desc}</span>
+                </span>
+                <span className="option-card-check">
+                  {userType === opt.value && <FaCheck />}
+                </span>
+              </button>
+            ))}
           </div>
-          
+
           <button type="submit" className="submit-btn">
             Continue
           </button>

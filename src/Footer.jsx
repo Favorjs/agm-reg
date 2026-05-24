@@ -1,29 +1,15 @@
 export default function Footer() {
-    return (
-      <footer className="footer">
-        <div className="footer-content">
-          {/* <div className="footer-section">
-            <h4>E-Voting System</h4>
-            <p>Secure digital voting platform</p>
-          </div> */}
-          
-          <div className="footer-section">
-            <h4>Quick Links</h4>
-            <a href="#faq">FAQ</a>
-            {/* <a href="#contact">Contact</a> */}
-            {/* <a href="#privacy">Privacy Policy</a> */}
-          </div>
-          
-          <div className="footer-section">
-            <h4>Contact</h4>
-            <p>registrars@apel.com.ng</p>
-            <p>+234 704 612 6698</p>
-          </div>
-        </div>
-        
-        <div className="footer-bottom">
-          <p>&copy; {new Date().getFullYear()} AGM Registration. All rights reserved. Apel Capital Registrarrs</p>
-        </div>
-      </footer>
-    )
-  }
+  return (
+    <footer className="footer">
+      <div className="footer-bottom" style={{ borderTop: 'none', marginTop: 0 }}>
+        <p>
+          &copy; {new Date().getFullYear()} Apel Capital Registrars Limited. All rights reserved.
+          &nbsp;·&nbsp;
+          <a href="mailto:registrars@apel.com.ng" style={{ color: '#94a3b8', textDecoration: 'none' }}>
+            registrars@apel.com.ng
+          </a>
+        </p>
+      </div>
+    </footer>
+  );
+}

@@ -1,127 +1,79 @@
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaCheckCircle, FaEnvelope, FaPhone, FaArrowRight, FaVoteYea, FaThumbsUp, FaThumbsDown } from 'react-icons/fa';
+import { FaCheckCircle, FaVoteYea, FaThumbsUp, FaThumbsDown, FaArrowRight } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import './Success.css';
 
+const fade   = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } };
+const stagger = { visible: { transition: { staggerChildren: .1 } } };
+
 const Success = ({ shareholderData, onBackToHome }) => {
   const navigate = useNavigate();
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        when: "beforeChildren"
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 100
-      }
-    }
-  };
+  useEffect(() => { window.scrollTo(0, 0); }, []);
 
   return (
-    <motion.div 
-      className="success-container"
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-    >
-      <motion.div 
+    <div className="success-container">
+      <motion.div
         className="success-card motion-card"
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 200 }}
+        variants={stagger}
+        initial="hidden"
+        animate="visible"
       >
-        <motion.div className="success-icon" variants={itemVariants}>
+        <motion.div className="success-icon" variants={fade}>
           <FaCheckCircle />
         </motion.div>
-        
-        <motion.h2 variants={itemVariants}>Registration Successful! 🎉</motion.h2>
-        
-        <motion.div className="confirmation-message" variants={itemVariants}>
-          <p>Thank you for registering for the LASACO ASSURANCE PLC EGM.</p>
-          <p>A Success email has been sent to <strong>{shareholderData?.email}</strong>.</p>
+
+        <motion.h2 variants={fade}>Registration Successful!</motion.h2>
+
+        <motion.div className="confirmation-message" variants={fade}>
+          <p>Thank you for registering for the <strong>Skyway Aviation Handling Company PLC AGM</strong>.</p>
+          {shareholderData?.email && (
+            <p>A confirmation email has been sent to <strong>{shareholderData.email}</strong>.</p>
+          )}
         </motion.div>
 
-     <motion.div className="voting-instructions">
+        <motion.div className="voting-instructions" variants={fade}>
           <h3><FaVoteYea /> Voting Instructions</h3>
           <ol>
-            <li >
-            
-              <p>Before the meeting, ensure you have the latest version of Zoom installed</p>
-            </li>
+            <li>Ensure you have the latest version of <strong>Zoom</strong> installed before the meeting.</li>
+            <li>Join the Zoom meeting using the link provided in your invitation email.</li>
+            <li>During the voting session, the host will launch the polling feature.</li>
             <li>
-           
-              <p>Join the scheduled Zoom meeting using the link provided in your invitation</p>
-         
+              When prompted, cast your vote:
+              <div className="voting-options">
+                <div className="option">
+                  <FaThumbsUp className="option-icon" style={{ color: '#10b981' }} />
+                  <span>Vote FOR the resolution</span>
+                </div>
+                <span className="option-or">OR</span>
+                <div className="option">
+                  <FaThumbsDown className="option-icon" style={{ color: '#ef4444' }} />
+                  <span>Vote AGAINST the resolution</span>
+                </div>
+              </div>
             </li>
-            <li>
-             
-              <p>During the voting session, the host will launch the polling feature</p>
-            </li>
-            <li>
-           
-              <p>When prompted:</p>
-              
-          <div className="voting-options">
-  <div className="option">
-    <FaThumbsUp className="option-icon" />
-    <span>Vote FOR the resolution</span>
-  </div>
-  <p className="option-or">OR</p>
-  <div className="option">
-    <FaThumbsDown className="option-icon" />
-    <span>Vote AGAINST the resolution</span>
-  </div>
-</div>
-  </li>
-  <li>
- 
-    <p>Select your vote from the options presented</p>
-  </li>
-  <li>
-   
-    <p>Submit your vote before the time limit expires</p>
-            </li>
+            <li>Select your vote from the options presented.</li>
+            <li>Submit your vote before the time limit expires.</li>
           </ol>
-     </motion.div>
+        </motion.div>
 
-         <motion.div className="next-steps">
+        <motion.div className="next-steps" variants={fade}>
           <h4>What's Next?</h4>
-          <p>You will recieve a zoom meeting link in your mail to join the meeting as a shareholder </p>
-      </motion.div>
- <motion.button 
-          onClick={() => onBackToHome()}
+          <p>You will receive a Zoom meeting link via email to join the AGM as a shareholder.</p>
+        </motion.div>
+
+        <motion.button
           className="back-home-btn"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          variants={itemVariants}
+          onClick={() => onBackToHome()}
+          variants={fade}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: .97 }}
         >
           Back to Home <FaArrowRight />
         </motion.button>
       </motion.div>
-    </motion.div>
+    </div>
   );
 };
 
 export default Success;
-
-
-
-
-

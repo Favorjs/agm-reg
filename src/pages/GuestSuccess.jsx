@@ -1,45 +1,52 @@
 import { motion } from 'framer-motion';
-import { FaCheckCircle } from 'react-icons/fa';
+import { FaCheckCircle, FaArrowRight } from 'react-icons/fa';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+const fade    = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } };
+const stagger = { visible: { transition: { staggerChildren: .1 } } };
+
 const GuestSuccess = ({ guestData: propGuestData }) => {
-    const { state } = useLocation();
+  const { state } = useLocation();
   const guestData = propGuestData || state?.guestData;
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
 
   return (
-    <motion.div 
-      className="success-container"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="success-card">
-        <div className="success-icon">
+    <div className="success-container">
+      <motion.div
+        className="success-card motion-card"
+        variants={stagger}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div className="success-icon" variants={fade}>
           <FaCheckCircle />
-        </div>
-        
-        <h2>Registration Successful! 🎉</h2>
-        
-        <div className="confirmation-message">
-          <p>Thank you for registering for the LASACO ASSURANCE PLC EGM.</p>
-          {/* <p>A confirmation has been sent to <strong>{guestData?.email}</strong>.</p> */}
-          <p>You registered as: <strong>{guestData?.userType}</strong></p>
-        </div>
+        </motion.div>
 
-        <div className="next-steps">
+        <motion.h2 variants={fade}>Registration Successful!</motion.h2>
+
+        <motion.div className="confirmation-message" variants={fade}>
+          <p>Thank you for registering for the <strong>Skyway Aviation Handling Company PLC AGM</strong>.</p>
+          {guestData?.userType && (
+            <p>Registered as: <strong style={{ textTransform: 'capitalize' }}>{guestData.userType}</strong></p>
+          )}
+        </motion.div>
+
+        <motion.div className="next-steps" variants={fade}>
           <h4>What's Next?</h4>
-          <p>You'll receive a Youtube invitation Link to attend the EGM</p>
-        </div>
+          <p>You will receive a YouTube invitation link to watch and attend the AGM.</p>
+        </motion.div>
 
-        <button 
-          onClick={() => navigate('/')}
+        <motion.button
           className="back-home-btn"
+          onClick={() => navigate('/')}
+          variants={fade}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: .97 }}
         >
-          Back to Home
-        </button>
-      </div>
-    </motion.div>
+          Back to Home <FaArrowRight />
+        </motion.button>
+      </motion.div>
+    </div>
   );
 };
 

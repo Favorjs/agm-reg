@@ -1,14 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { FaUser, FaEnvelope, FaPhone, FaIdBadge } from 'react-icons/fa';
 
 const GuestRegistration = ({ setGuestData }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    userType: 'observer'
-  });
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', userType: 'observer' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -20,21 +16,14 @@ const GuestRegistration = ({ setGuestData }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Basic validation
     if (!formData.name || !formData.email || !formData.phone || !formData.userType) {
       setError('Please fill in all required fields');
       return;
     }
-    
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       setError('Please enter a valid email address');
       return;
     }
-    
-    // Phone validation (basic)
     if (formData.phone.length < 10) {
       setError('Please enter a valid phone number');
       return;
@@ -42,97 +31,81 @@ const GuestRegistration = ({ setGuestData }) => {
 
     setLoading(true);
     setError('');
-    
+
     try {
-      // Here you would typically send the data to your backend
-      // For now, we'll just log it and navigate to a success page
       const response = await fetch('https://api.lasaco.apel.com.ng/api/register-guest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
-  
       const data = await response.json();
-      
       if (response.ok && data.success) {
-        // Update the guestData in parent component
         setGuestData(data.guest);
-        // Then navigate to success page
         navigate('/guest/success', { state: { guestData: data.guest } });
-
-      } 
-    } catch (err) {
-      setError('Failed to connect to server');
-      console.error('Registration error:', err);
+      }
+    } catch {
+      setError('Failed to connect to server. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
+  const fields = [
+    { name: 'name',  label: 'Full Name',     type: 'text',  icon: <FaUser />,    placeholder: 'Enter your full name' },
+    { name: 'email', label: 'Email Address', type: 'email', icon: <FaEnvelope />, placeholder: 'Enter your email address' },
+    { name: 'phone', label: 'Phone Number',  type: 'tel',   icon: <FaPhone />,   placeholder: 'e.g. 08012345678' },
+  ];
+
   return (
-    <motion.div 
+    <motion.div
       className="guest-registration-container"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
     >
       <div className="guest-registration-card">
-        <h2>Guest Registration</h2>
-        <p>Please fill in your details to register for the EGM</p>
-        
+        <p className="page-title">Guest Registration</p>
+        <p className="page-subtitle">Fill in your details to register for the AGM</p>
+
         {error && <p className="error-message">{error}</p>}
-        
+
         <form onSubmit={handleSubmit}>
+          {fields.map(({ name, label, type, icon, placeholder }) => (
+            <div className="form-group" key={name}>
+              <label className="label-text">{label} *</label>
+              <div className="input-wrap">
+                <span className="input-icon">{icon}</span>
+                <input
+                  type={type}
+                  name={name}
+                  value={formData[name]}
+                  onChange={handleChange}
+                  placeholder={placeholder}
+                  required
+                />
+              </div>
+            </div>
+          ))}
+
           <div className="form-group">
-            <label>Full Name *</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Enter your full name"
-              required
-            />
+            <label className="label-text">Attending As</label>
+            <div className="input-wrap">
+              <span className="input-icon"><FaIdBadge /></span>
+              <select
+                name="userType"
+                value={formData.userType}
+                onChange={handleChange}
+                style={{ paddingLeft: '2.6rem' }}
+              >
+                <option value="guest">Guest</option>
+                <option value="regulator">Regulator</option>
+                <option value="external-auditor">External Auditor</option>
+              </select>
+            </div>
           </div>
-          
-          <div className="form-group">
-            <label>Email Address *</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label>Phone Number *</label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="Enter your phone number"
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label>Attending As</label>
-            <select
-              name="userType"
-              value={formData.userType}
-              onChange={handleChange}
-            >
-              <option value="guest">Guest</option>
-              <option value="regulator">Regulator</option>
-              <option value="external-auditor"> External Auditor</option>
-            </select>
-          </div>
-          
-          <button type="submit" disabled={loading} className="submit-btn">
-            {loading ? 'Registering...' : 'Complete Registration'}
+
+          <button type="submit" className="submit-btn" disabled={loading}>
+            {loading ? <span className="spinner" /> : 'Complete Registration'}
           </button>
         </form>
       </div>

@@ -1,70 +1,49 @@
 import { motion } from 'framer-motion';
-import { FaCheckCircle, FaEnvelope, FaClock } from 'react-icons/fa';
+import { FaCheckCircle, FaEnvelope, FaClock, FaArrowRight } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import './Presuccess.css';
 
-const PreRegistrationSuccess = () => {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        when: "beforeChildren"
-      }
-    }
-  };
+const fade    = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } };
+const stagger = { visible: { transition: { staggerChildren: .1 } } };
 
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 100
-      }
-    }
-  };
-
-  return (
-    <motion.div 
-      className="success-container"
+const PreRegistrationSuccess = () => (
+  <div className="success-container">
+    <motion.div
+      className="success-card motion-card"
+      variants={stagger}
       initial="hidden"
       animate="visible"
-      variants={containerVariants}
     >
-      <motion.div 
-        className="success-card motion-card"
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 200 }}
-      >
-        <motion.div className="success-icon" variants={itemVariants}>
-          <FaCheckCircle />
-        </motion.div>
-        
-        <motion.h2 variants={itemVariants}>Pre-Registration Complete! 🎉</motion.h2>
-        
-        <motion.div className="confirmation-message" variants={itemVariants}>
-          <p>Thank you for starting your registration process.</p>
-          <p><FaEnvelope /> Please check your email or Phone Number and click the confirmation link to complete your registration.</p>
-          <p><FaClock /> The link will expire in 15 minutes.</p>
-        </motion.div>
+      <motion.div className="success-icon" variants={fade} style={{ color: 'var(--brand)' }}>
+        <FaCheckCircle />
+      </motion.div>
 
-        <div className="next-steps">
-          <h4>What's Next?</h4>
-          <p>After clicking the confirmation link in your email, you'll be fully registered for the Zoom Meeting.</p>
-        </div>
+      <motion.h2 variants={fade}>Pre-Registration Complete!</motion.h2>
 
-  <motion.div variants={itemVariants}>
-          <Link to="https://lasaco.apel.com.ng/" className="back-home-btn">
-            Back to Home
-          </Link>
-        </motion.div>
+      <motion.div className="confirmation-message" variants={fade}>
+        <p>Thank you for starting your registration process.</p>
+        <p>
+          <FaEnvelope style={{ marginRight: '.4rem', color: 'var(--brand)' }} />
+          Check your email or SMS for a confirmation link to complete your registration.
+        </p>
+        <p>
+          <FaClock style={{ marginRight: '.4rem', color: 'var(--accent)' }} />
+          The confirmation link expires in <strong>15 minutes</strong>.
+        </p>
+      </motion.div>
+
+      <motion.div className="next-steps" variants={fade}>
+        <h4>What's Next?</h4>
+        <p>After confirming via email or SMS, you'll be fully registered and will receive your Zoom meeting link.</p>
+      </motion.div>
+
+      <motion.div variants={fade}>
+        <Link to="https://lasaco.apel.com.ng/" className="back-home-btn">
+          Back to Home <FaArrowRight />
+        </Link>
       </motion.div>
     </motion.div>
-  );
-};
+  </div>
+);
 
 export default PreRegistrationSuccess;

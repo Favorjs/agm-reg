@@ -23,7 +23,7 @@ const ShareholderCheck = ({ setShareholderData }) => {
     setEditedEmail(''); setEditedPhone('');
 
     try {
-      const res  = await fetch('https://api.lasaco.apel.com.ng/api/check-shareholder', {
+      const res  = await fetch('https://api.sahco.apel.com.ng/api/check-shareholder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ searchTerm }),
@@ -66,7 +66,7 @@ const ShareholderCheck = ({ setShareholderData }) => {
     };
 
     try {
-      const res  = await fetch('https://api.lasaco.apel.com.ng/api/send-confirmation', {
+      const res  = await fetch('https://api.sahco.apel.com.ng/api/send-confirmation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ acno: updated.acno, email: updated.email, phone_number: updated.phone_number, chn: updated.chn }),

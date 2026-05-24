@@ -28,7 +28,7 @@ CREATE TEMP TABLE shareholders_stage (
 );
 
 # then insert the data into the temp table frfom my local csv file
-\copy shareholders_stage(acno, name, phoneNumber, holdings, address, email, chn, rin, created_at) FROM 'C:/Users/fadebowale/Desktop/APEL-WEBSITE/lasaco_reg2.csv' DELIMITER ',' CSV HEADER;
+\copy shareholders_stage(acno, name, phoneNumber, holdings, address, email, chn, rin, created_at) FROM 'C:/Users/fadebowale/Desktop/APEL-WEBSITE/sahco_reg2.csv' DELIMITER ',' CSV HEADER;
 
 # make sure it is on a single line because it is a \copy command in psql  then run the command
 # after that run the command below to insert the data from the temp table into the main table

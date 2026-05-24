@@ -38,7 +38,7 @@ const PreRegistrationSuccess = () => (
       </motion.div>
 
       <motion.div variants={fade}>
-        <Link to="https://lasaco.apel.com.ng/" className="back-home-btn">
+        <Link to="https://sahco.apel.com.ng/" className="back-home-btn">
           Back to Home <FaArrowRight />
         </Link>
       </motion.div>

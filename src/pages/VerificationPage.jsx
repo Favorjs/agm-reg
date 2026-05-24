@@ -31,7 +31,7 @@ const VerificationPage = () => {
     setMatches([]);
     
     try {
-      const response = await axios.post( `https://api.lasaco.apel.com.ng/api/verify-shareholder`, formData);
+      const response = await axios.post( `https://api.sahco.apel.com.ng/api/verify-shareholder`, formData);
       
       if (response.data.exists) {
         if (response.data.exactMatch) {

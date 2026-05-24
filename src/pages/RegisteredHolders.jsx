@@ -63,7 +63,7 @@
 //     try {
 //       setLoading(true);
 //       const response = await fetch(
-//         `https://api.lasaco.apel.com.ng/api/registered-users?page=${pagination.page}&pageSize=${pagination.pageSize}&sortBy=${sortConfig.key}&sortOrder=${sortConfig.direction}&search=${searchTerm}`
+//         `https://api.sahco.apel.com.ng/api/registered-users?page=${pagination.page}&pageSize=${pagination.pageSize}&sortBy=${sortConfig.key}&sortOrder=${sortConfig.direction}&search=${searchTerm}`
 //       );
 //       if (!response.ok) {
 //         throw new Error('Failed to fetch users');
@@ -339,7 +339,7 @@ const RegisteredHolders = () => {
       // First, get the total number of items to fetch all at once
       const endpoint = userTypes === 'shareholders' ? 'registered-users' : 'registered-guests';
       const response = await fetch(
-        `https://api.lasaco.apel.com.ng/api/${endpoint}?page=1&pageSize=${pagination.totalItems || 1000}&sortBy=registered_at&sortOrder=desc&search=${searchTerm}`,
+        `https://api.sahco.apel.com.ng/api/${endpoint}?page=1&pageSize=${pagination.totalItems || 1000}&sortBy=registered_at&sortOrder=desc&search=${searchTerm}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -401,7 +401,7 @@ const RegisteredHolders = () => {
         : 'registered-guests';
       
       const response = await fetch(
-        `https://api.lasaco.apel.com.ng/api/${endpoint}?page=${pagination.page}&pageSize=${pagination.pageSize}&sortBy=${sortConfig.key}&sortOrder=${sortConfig.direction}&search=${searchTerm}`,
+        `https://api.sahco.apel.com.ng/api/${endpoint}?page=${pagination.page}&pageSize=${pagination.pageSize}&sortBy=${sortConfig.key}&sortOrder=${sortConfig.direction}&search=${searchTerm}`,
         {
           headers: {
             'Content-Type': 'application/json',

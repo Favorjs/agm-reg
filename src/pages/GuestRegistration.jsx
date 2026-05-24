@@ -33,7 +33,7 @@ const GuestRegistration = ({ setGuestData }) => {
     setError('');
 
     try {
-      const response = await fetch('https://api.lasaco.apel.com.ng/api/register-guest', {
+      const response = await fetch('https://api.sahco.apel.com.ng/api/register-guest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

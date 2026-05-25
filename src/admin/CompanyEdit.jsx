@@ -10,7 +10,7 @@ function authHeaders(json = true) {
 }
 
 const EMPTY = {
-  slug: '', subdomain: '', name: '', meeting_type: 'EGM', meeting_date: '',
+  slug: '', name: '', meeting_type: 'EGM', meeting_date: '',
   meeting_time: '', zoom_link: '', youtube_link: '', primary_color: '#107b5f',
   is_registration_open: false, is_active: true,
 };
@@ -355,8 +355,7 @@ export default function CompanyEdit() {
           <form id="company-form" onSubmit={save}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 1rem' }}>
               {field('Company Name', 'name', 'text', { required: true })}
-              {field('Slug (sahco)', 'slug', 'text', { required: true })}
-              {field('Subdomain (sahco.apel.com.ng)', 'subdomain', 'text', { required: true })}
+              {field('URL Slug  e.g. sahco', 'slug', 'text', { required: true })}
 
               <div className="form-group">
                 <label className="label-text">Meeting Type</label>

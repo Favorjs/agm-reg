@@ -69,7 +69,7 @@ const UserTypeSelection = () => {
           padding: '1.1rem 2rem',
           textAlign: 'center',
         }}>
-        <p style={{ color: '#fff', fontWeight: 800, fontSize: '1rem', margin: '0 0 .5rem', letterSpacing: '.01em' }}>
+        <p style={{ color: '#ffffff', fontWeight: 800, fontSize: '1rem', margin: '0 0 .5rem', letterSpacing: '.01em' }}>
             {company?.name}
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>

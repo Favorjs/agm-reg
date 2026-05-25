@@ -305,8 +305,8 @@ button { font-family: inherit; }
 /* ── ─────────── USER TYPE SELECTION ────────────────────── */
 .user-type-container {
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
   min-height: calc(100vh - var(--header-h));
   padding: 2.5rem 1rem 3rem;
 }
@@ -719,6 +719,11 @@ tbody tr:hover { background: var(--bg); }
 
 /* Framer Motion */
 .motion-card { will-change: transform, opacity; }
+
+@keyframes toastSlideUp {
+  from { transform: translateY(1rem); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
 
 /* ── ─────────── FOOTER ───────────────────────────────────── */
 .footer {

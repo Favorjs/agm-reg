@@ -2,13 +2,16 @@ import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaCheckCircle, FaVoteYea, FaThumbsUp, FaThumbsDown, FaArrowRight } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { useCompany } from '../context/CompanyContext';
 import './Success.css';
 
 const fade   = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } };
 const stagger = { visible: { transition: { staggerChildren: .1 } } };
 
-const Success = ({ shareholderData, onBackToHome }) => {
+const Success = ({ shareholderData }) => {
   const navigate = useNavigate();
+  const { company } = useCompany();
+  const slug = company?.slug || '';
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   return (
@@ -26,7 +29,7 @@ const Success = ({ shareholderData, onBackToHome }) => {
         <motion.h2 variants={fade}>Registration Successful!</motion.h2>
 
         <motion.div className="confirmation-message" variants={fade}>
-          <p>Thank you for registering for the <strong>Skyway Aviation Handling Company PLC AGM</strong>.</p>
+          <p>Thank you for registering for the <strong>{company?.name} {company?.meeting_type}</strong>.</p>
           {shareholderData?.email && (
             <p>A confirmation email has been sent to <strong>{shareholderData.email}</strong>.</p>
           )}
@@ -59,12 +62,12 @@ const Success = ({ shareholderData, onBackToHome }) => {
 
         <motion.div className="next-steps" variants={fade}>
           <h4>What's Next?</h4>
-          <p>You will receive a Zoom meeting link via email to join the AGM as a shareholder.</p>
+          <p>You will receive a meeting link via email to join the {company?.meeting_type} as a shareholder.</p>
         </motion.div>
 
         <motion.button
           className="back-home-btn"
-          onClick={() => onBackToHome()}
+          onClick={() => navigate(slug ? `/${slug}` : '/')}
           variants={fade}
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: .97 }}

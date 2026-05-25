@@ -2,12 +2,16 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaUser, FaEnvelope, FaPhone, FaIdBadge } from 'react-icons/fa';
+import { useCompany, API } from '../context/CompanyContext';
 
 const GuestRegistration = ({ setGuestData }) => {
+  const navigate = useNavigate();
+  const { company } = useCompany();
+  const slug = company?.slug || 'dev';
+
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', userType: 'observer' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,15 +37,17 @@ const GuestRegistration = ({ setGuestData }) => {
     setError('');
 
     try {
-      const response = await fetch('https://api.sahco.apel.com.ng/api/register-guest', {
+      const response = await fetch(`${API}/api/company/register-guest`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Company-Slug': slug },
         body: JSON.stringify(formData),
       });
       const data = await response.json();
       if (response.ok && data.success) {
         setGuestData(data.guest);
-        navigate('/guest/success', { state: { guestData: data.guest } });
+        navigate(`/${slug}/guest/success`, { state: { guestData: data.guest } });
+      } else {
+        setError(data.error || 'Registration failed. Please try again.');
       }
     } catch {
       setError('Failed to connect to server. Please try again.');
@@ -65,7 +71,7 @@ const GuestRegistration = ({ setGuestData }) => {
     >
       <div className="guest-registration-card">
         <p className="page-title">Guest Registration</p>
-        <p className="page-subtitle">Fill in your details to register for the AGM</p>
+        <p className="page-subtitle">Fill in your details to register for the {company?.name} {company?.meeting_type}</p>
 
         {error && <p className="error-message">{error}</p>}
 

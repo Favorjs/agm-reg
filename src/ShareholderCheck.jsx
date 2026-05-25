@@ -2,12 +2,16 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaSearch, FaUser, FaIdCard, FaEnvelope, FaPhone, FaChevronRight, FaArrowLeft } from 'react-icons/fa';
+import { useCompany, API } from './context/CompanyContext';
 
 const fade   = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: .35 } } };
 const stagger = { visible: { transition: { staggerChildren: .07 } } };
 
 const ShareholderCheck = ({ setShareholderData }) => {
   const navigate = useNavigate();
+  const { company } = useCompany();
+  const slug = company?.slug || 'dev';
+
   const [searchTerm, setSearchTerm]             = useState('');
   const [loading, setLoading]                   = useState(false);
   const [error, setError]                       = useState('');
@@ -23,9 +27,9 @@ const ShareholderCheck = ({ setShareholderData }) => {
     setEditedEmail(''); setEditedPhone('');
 
     try {
-      const res  = await fetch('https://api.sahco.apel.com.ng/api/check-shareholder', {
+      const res  = await fetch(`${API}/api/company/check-shareholder`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Company-Slug': slug },
         body: JSON.stringify({ searchTerm }),
       });
       const data = await res.json();
@@ -66,15 +70,15 @@ const ShareholderCheck = ({ setShareholderData }) => {
     };
 
     try {
-      const res  = await fetch('https://api.sahco.apel.com.ng/api/send-confirmation', {
+      const res  = await fetch(`${API}/api/company/send-confirmation`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Company-Slug': slug },
         body: JSON.stringify({ acno: updated.acno, email: updated.email, phone_number: updated.phone_number, chn: updated.chn }),
       });
       const data = await res.json();
       if (res.ok) {
         setShareholderData(updated);
-        navigate('/shareholder/presuccess');
+        navigate(`/${slug}/shareholder/presuccess`);
       } else {
         setError(data.error || 'Registration failed or shareholder already registered');
       }
@@ -102,16 +106,13 @@ const ShareholderCheck = ({ setShareholderData }) => {
           {/* ── Search ── */}
           {!selectedShareholder && !results && (
             <motion.div key="search" variants={stagger} initial="hidden" animate="visible" exit={{ opacity: 0 }}>
-              <motion.p variants={fade} className="page-title">Skyway Aviation Handling Company PLC</motion.p>
-              <motion.p variants={fade} style={{ textAlign:'left', fontWeight:600, color:'var(--brand)', marginBottom:'.25rem', fontSize:'.9rem' }}>
-                AGM REGISTRATION
-              </motion.p>
+              <motion.p variants={fade} className="page-title">Shareholder Search</motion.p>
               <motion.p variants={fade} className="page-subtitle">
-                Search by name, CHN or registrar account number
+                Search by name, CHN or registrar account number to find your record
               </motion.p>
 
               <motion.div variants={fade} className="alert alert-warning" style={{ marginBottom:'1.25rem' }}>
-                You must have a valid email or phone number on record to attend the AGM.
+                You must have a valid email or phone number on record to attend the {company?.meeting_type}.
               </motion.div>
 
               <form onSubmit={handleSearch}>

@@ -277,12 +277,12 @@
 
 
 import { useState, useEffect } from 'react';
-import { 
-  FaUsers, 
-  FaSearch, 
-  FaSort, 
-  FaSortUp, 
-  FaSortDown, 
+import {
+  FaUsers,
+  FaSearch,
+  FaSort,
+  FaSortUp,
+  FaSortDown,
   FaFileExport,
   FaPrint,
   FaArrowLeft,
@@ -293,6 +293,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import './RegisteredHolders.css';
 import { utils, writeFile } from 'xlsx';
+import { API, useCompany } from '../context/CompanyContext';
 
 const RegisteredHolders = () => {
   const [users, setUsers] = useState([]);
@@ -311,6 +312,8 @@ const RegisteredHolders = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [userTypes, setUserTypes] = useState('shareholders');
   const navigate = useNavigate();
+  const { company } = useCompany();
+  const slug = company?.slug || '';
 
   const columnConfig = {
     shareholders: [
@@ -339,11 +342,12 @@ const RegisteredHolders = () => {
       // First, get the total number of items to fetch all at once
       const endpoint = userTypes === 'shareholders' ? 'registered-users' : 'registered-guests';
       const response = await fetch(
-        `https://api.sahco.apel.com.ng/api/${endpoint}?page=1&pageSize=${pagination.totalItems || 1000}&sortBy=registered_at&sortOrder=desc&search=${searchTerm}`,
+        `${API}/api/${endpoint}?page=1&pageSize=${pagination.totalItems || 1000}&sortBy=registered_at&sortOrder=desc&search=${searchTerm}`,
         {
           headers: {
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'X-Company-Slug': slug,
           }
         }
       );
@@ -401,11 +405,12 @@ const RegisteredHolders = () => {
         : 'registered-guests';
       
       const response = await fetch(
-        `https://api.sahco.apel.com.ng/api/${endpoint}?page=${pagination.page}&pageSize=${pagination.pageSize}&sortBy=${sortConfig.key}&sortOrder=${sortConfig.direction}&search=${searchTerm}`,
+        `${API}/api/${endpoint}?page=${pagination.page}&pageSize=${pagination.pageSize}&sortBy=${sortConfig.key}&sortOrder=${sortConfig.direction}&search=${searchTerm}`,
         {
           headers: {
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'X-Company-Slug': slug,
           }
         }
       );

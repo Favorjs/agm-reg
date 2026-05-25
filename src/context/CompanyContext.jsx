@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 const CompanyContext = createContext(null);
 
-export const API = import.meta.env.VITE_API_URL || 'http://localhost:2000';
+export const API = import.meta.env.VITE_API_URL;
 
 export function CompanyProvider({ children }) {
   const location = useLocation();

@@ -134,7 +134,6 @@ function AppRoutes() {
       {/* Admin portal — static routes always beat /:slug/* */}
       <Route path="/admin/login"                       element={<AdminLogin />} />
       <Route path="/admin/companies"                   element={<Companies />} />
-      <Route path="/admin/companies/new"               element={<CompanyEdit />} />
       <Route path="/admin/companies/:id"               element={<CompanyEdit />} />
       <Route path="/admin/companies/:id/registrations" element={<CompanyRegistrations />} />
       <Route path="/admin"                             element={<Navigate to="/admin/companies" />} />

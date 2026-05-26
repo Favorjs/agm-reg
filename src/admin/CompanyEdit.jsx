@@ -104,6 +104,8 @@ function LogoSlot({ label, url, which, inputRef, fallback, onDelete, preview, on
   );
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default function CompanyEdit() {
   const { id }         = useParams();
   const isNew          = id === 'new';
@@ -150,8 +152,16 @@ export default function CompanyEdit() {
     if (nav?.created) showToast('Company created successfully!');
   }, []);
 
+  // Guard: if id is neither 'new' nor a real UUID, go back to the list
   useEffect(() => {
-    if (isNew) return;
+    if (!isNew && !UUID_RE.test(id)) {
+      console.error('CompanyEdit: invalid id in URL, redirecting. id =', id);
+      navigate('/admin/companies');
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (isNew || !UUID_RE.test(id)) return;
     fetch(`${API}/api/admin/companies/${id}`, { headers: authHeaders() })
       .then(r => r.json())
       .then(data => {
@@ -189,6 +199,10 @@ export default function CompanyEdit() {
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Save failed'); return; }
       if (isNew) {
+        if (!data.id) {
+          setError(`Company created but server returned no ID. Check server logs. Response: ${JSON.stringify(data)}`);
+          return;
+        }
         navigate(`/admin/companies/${data.id}`, { state: { created: true } });
       } else {
         setOriginalForm(form); // mark clean

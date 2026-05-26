@@ -5,7 +5,7 @@ export default function Footer() {
         <p>
           &copy; {new Date().getFullYear()} Apel Capital Registrars Limited. All rights reserved.
           &nbsp;·&nbsp;
-          <a href="mailto:registrars@apel.com.ng" style={{ color: '#94a3b8', textDecoration: 'none' }}>
+          <a href="mailto:registrars@apel.com.ng" style={{ color: '#ffffff', textDecoration: 'none' }}>
             registrars@apel.com.ng
           </a>
         </p>

@@ -9,7 +9,7 @@ const GuestRegistration = ({ setGuestData }) => {
   const { company } = useCompany();
   const slug = company?.slug || 'dev';
 
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', userType: 'observer' });
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', userType: 'regulator' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -103,7 +103,6 @@ const GuestRegistration = ({ setGuestData }) => {
                 onChange={handleChange}
                 style={{ paddingLeft: '2.6rem' }}
               >
-                <option value="guest">Guest</option>
                 <option value="regulator">Regulator</option>
                 <option value="external-auditor">External Auditor</option>
               </select>

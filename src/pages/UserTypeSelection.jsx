@@ -24,8 +24,8 @@ const UserTypeSelection = () => {
     {
       value: 'guest',
       icon: <FaUserTie />,
-      label: 'Guest / Regulator / Observer',
-      desc: 'Attending as a Guest, Regulator, or External Auditor',
+      label: 'Regulator / External Auditor',
+      desc: 'Attending as a Regulator or External Auditor',
     },
   ];
 
@@ -45,17 +45,15 @@ const UserTypeSelection = () => {
       {/* ── Company branding hero ─────────────────────────── */}
       <motion.div variants={fade} style={{
         background: '#fff',
-        borderRadius: 20,
-        boxShadow: '0 2px 24px rgba(0,0,0,.08)',
-        overflow: 'hidden',
+        borderRadius: 16,
+        boxShadow: '0 2px 20px rgba(0,0,0,.07)',
         maxWidth: 520,
         width: '100%',
         marginBottom: '1.5rem',
+        borderLeft: '4px solid var(--primary)',
+        overflow: 'hidden',
       }}>
-        {/* Top accent bar in brand color */}
-        <div style={{ height: 6, background: `linear-gradient(90deg, var(--primary), var(--brand))` }} />
-
-        {/* Logo row — partner/registrar logo only */}
+        {/* Logo */}
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '2rem 2.5rem 1.5rem' }}>
           {company?.logo2_url
             ? <img src={company.logo2_url} alt="Partner" style={{ height: 72, maxWidth: 220, objectFit: 'contain' }} />
@@ -63,32 +61,32 @@ const UserTypeSelection = () => {
           }
         </div>
 
+        {/* Divider */}
+        <div style={{ height: 1, background: '#f1f5f9', margin: '0 1.75rem' }} />
+
         {/* Company name + meeting info */}
-        <div style={{
-          background: 'var(--primary)',
-          padding: '1.1rem 2rem',
-          textAlign: 'center',
-        }}>
-        <p style={{ color: '#ffffff', fontWeight: 800, fontSize: '1rem', margin: '0 0 .5rem', letterSpacing: '.01em' }}>
+        <div style={{ padding: '1rem 1.75rem 1.25rem', textAlign: 'center' }}>
+          <p style={{ fontWeight: 700, fontSize: '.95rem', color: '#1a202c', margin: '0 0 .65rem' }}>
             {company?.name}
           </p>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '.65rem', flexWrap: 'wrap' }}>
             <span style={{
-              background: 'rgba(255,255,255,.15)', color: '#fff',
+              background: '#f0fdf4', color: 'var(--primary)',
+              border: '1px solid #bbf7d0',
               borderRadius: 20, padding: '.2rem .75rem',
-              fontSize: '.75rem', fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase',
+              fontSize: '.72rem', fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase',
             }}>
               {company?.meeting_type}
             </span>
             {company?.meeting_date && (
-              <span style={{ color: 'rgba(255,255,255,.85)', fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
-                <FaCalendarAlt style={{ opacity: .7 }} />
+              <span style={{ color: '#64748b', fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '.3rem' }}>
+                <FaCalendarAlt style={{ color: 'var(--primary)', opacity: .8, flexShrink: 0 }} />
                 {company.meeting_date}
               </span>
             )}
             {company?.meeting_time && (
-              <span style={{ color: 'rgba(255,255,255,.85)', fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
-                <FaClock style={{ opacity: .7 }} />
+              <span style={{ color: '#64748b', fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '.3rem' }}>
+                <FaClock style={{ color: 'var(--primary)', opacity: .8, flexShrink: 0 }} />
                 {company.meeting_time}
               </span>
             )}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { FaArrowLeft, FaUpload, FaFileExcel, FaTrash, FaCheck, FaUsers, FaCopy, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaArrowLeft, FaUpload, FaFileExcel, FaTrash, FaCheck, FaUsers, FaCopy, FaExternalLinkAlt, FaPlus, FaMinus } from 'react-icons/fa';
 import { API } from '../context/CompanyContext';
 
 function authHeaders(json = true) {
@@ -123,6 +123,11 @@ export default function CompanyEdit() {
   const [logo2Preview, setLogo2Preview] = useState(null);
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState('');
+
+  const EMPTY_SH = { acno: '', name: '', email: '', phone_number: '', holdings: '', chn: '', rin: '', address: '' };
+  const [showAddForm, setShowAddForm]   = useState(false);
+  const [singleSh, setSingleSh]         = useState(EMPTY_SH);
+  const [addingShMsg, setAddingShMsg]   = useState('');
   const [shareholderCount, setShareholderCount] = useState(null); // null = loading
   const [error, setError]         = useState('');
   const [toast, setToast]         = useState(null);
@@ -321,6 +326,27 @@ export default function CompanyEdit() {
     );
   };
 
+  const addSingleShareholder = async (e) => {
+    e.preventDefault();
+    if (!singleSh.acno || !singleSh.name) {
+      setAddingShMsg('error:Account No and Name are required');
+      return;
+    }
+    setAddingShMsg('saving');
+    try {
+      const res  = await fetch(`${API}/api/admin/companies/${id}/shareholders/single`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(singleSh),
+      });
+      const data = await res.json();
+      if (!res.ok) { setAddingShMsg(`error:${data.error || 'Save failed'}`); return; }
+      setAddingShMsg(data.created ? 'success:Shareholder added' : 'success:Shareholder updated');
+      setSingleSh(EMPTY_SH);
+      await loadShareholderCount();
+    } catch { setAddingShMsg('error:Network error'); }
+  };
+
   const field = (label, key, type = 'text', extra = {}) => (
     <div className="form-group" key={key}>
       <label className="label-text">{label}</label>
@@ -515,6 +541,10 @@ export default function CompanyEdit() {
                   <p style={{ fontSize: '.78rem', color: '#94a3b8', margin: '.5rem 0 0' }}>
                     Columns: <code>Account No, Name, Email, Phone, Holdings, CHN, RIN, Address</code>
                   </p>
+                  <p style={{ fontSize: '.75rem', color: '#f59e0b', margin: '.4rem 0 0', display: 'flex', alignItems: 'flex-start', gap: '.3rem' }}>
+                    <span style={{ flexShrink: 0 }}>⚠️</span>
+                    To preserve leading zeros (e.g. account numbers, phone numbers), select those columns in Excel, format them as <strong>Text</strong>, then re-enter the values before saving.
+                  </p>
                 </div>
 
                 {shareholderCount > 0 && (
@@ -534,6 +564,114 @@ export default function CompanyEdit() {
                   {importMsg}
                 </p>
               )}
+
+              {/* ── Add single shareholder ─────────────────── */}
+              <div style={{ marginTop: '1.25rem', borderTop: '1px solid #e2e8f0', paddingTop: '1.25rem' }}>
+                <button
+                  type="button"
+                  onClick={() => { setShowAddForm(p => !p); setAddingShMsg(''); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '.5rem',
+                    background: showAddForm ? '#f0fdf4' : '#f8fafc',
+                    border: `1px solid ${showAddForm ? '#86efac' : '#e2e8f0'}`,
+                    borderRadius: 8, padding: '.5rem 1rem', cursor: 'pointer',
+                    fontSize: '.82rem', fontWeight: 600, color: showAddForm ? '#15803d' : '#475569',
+                    fontFamily: 'inherit', transition: 'all .2s',
+                  }}
+                >
+                  {showAddForm ? <FaMinus size={11} /> : <FaPlus size={11} />}
+                  Add Single Shareholder
+                </button>
+
+                {showAddForm && (
+                  <form onSubmit={addSingleShareholder} style={{ marginTop: '1rem', background: '#f8fafc', borderRadius: 10, padding: '1.25rem', border: '1px solid #e2e8f0' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 1rem' }}>
+                      <div className="form-group">
+                        <label className="label-text">Account No *</label>
+                        <input
+                          className="input" style={{ paddingLeft: '1rem' }}
+                          value={singleSh.acno} onChange={e => setSingleSh(p => ({ ...p, acno: e.target.value }))}
+                          placeholder="e.g. 0001234567" required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="label-text">Full Name *</label>
+                        <input
+                          className="input" style={{ paddingLeft: '1rem' }}
+                          value={singleSh.name} onChange={e => setSingleSh(p => ({ ...p, name: e.target.value }))}
+                          placeholder="e.g. John Doe" required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="label-text">Email</label>
+                        <input
+                          type="email" className="input" style={{ paddingLeft: '1rem' }}
+                          value={singleSh.email} onChange={e => setSingleSh(p => ({ ...p, email: e.target.value }))}
+                          placeholder="optional"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="label-text">Phone</label>
+                        <input
+                          type="tel" className="input" style={{ paddingLeft: '1rem' }}
+                          value={singleSh.phone_number} onChange={e => setSingleSh(p => ({ ...p, phone_number: e.target.value }))}
+                          placeholder="e.g. 08012345678"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="label-text">Holdings</label>
+                        <input
+                          className="input" style={{ paddingLeft: '1rem' }}
+                          value={singleSh.holdings} onChange={e => setSingleSh(p => ({ ...p, holdings: e.target.value }))}
+                          placeholder="e.g. 5000"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="label-text">CHN</label>
+                        <input
+                          className="input" style={{ paddingLeft: '1rem' }}
+                          value={singleSh.chn} onChange={e => setSingleSh(p => ({ ...p, chn: e.target.value }))}
+                          placeholder="optional"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="label-text">RIN</label>
+                        <input
+                          className="input" style={{ paddingLeft: '1rem' }}
+                          value={singleSh.rin} onChange={e => setSingleSh(p => ({ ...p, rin: e.target.value }))}
+                          placeholder="optional"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="label-text">Address</label>
+                        <input
+                          className="input" style={{ paddingLeft: '1rem' }}
+                          value={singleSh.address} onChange={e => setSingleSh(p => ({ ...p, address: e.target.value }))}
+                          placeholder="optional"
+                        />
+                      </div>
+                    </div>
+
+                    {addingShMsg && addingShMsg !== 'saving' && (
+                      <p style={{
+                        fontSize: '.85rem', fontWeight: 600, margin: '.5rem 0',
+                        color: addingShMsg.startsWith('error:') ? '#dc2626' : '#107b5f',
+                      }}>
+                        {addingShMsg.replace(/^(error|success):/, '')}
+                      </p>
+                    )}
+
+                    <button
+                      type="submit"
+                      className="submit-btn"
+                      disabled={addingShMsg === 'saving'}
+                      style={{ marginTop: '.25rem', background: '#0f3d2e' }}
+                    >
+                      {addingShMsg === 'saving' ? <span className="spinner" /> : <><FaPlus size={12} /> Add Shareholder</>}
+                    </button>
+                  </form>
+                )}
+              </div>
             </div>
           </>
         )}

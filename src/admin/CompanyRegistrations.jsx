@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaDownload, FaCheck, FaUsers, FaUserCheck, FaUserTie, FaChartPie } from 'react-icons/fa';
+import { FaArrowLeft, FaDownload, FaCheck, FaUsers, FaUserCheck, FaUserTie, FaChartPie, FaEnvelope } from 'react-icons/fa';
 import { API } from '../context/CompanyContext';
 
 function authHeaders() {
@@ -30,6 +30,8 @@ export default function CompanyRegistrations() {
   const [tab, setTab]             = useState('shareholders');
   const [loading, setLoading]     = useState(true);
   const [toast, setToast]         = useState(null);
+  const [broadcasting, setBroadcasting] = useState(false);
+  const [showBroadcastConfirm, setShowBroadcastConfirm] = useState(false);
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
@@ -45,6 +47,24 @@ export default function CompanyRegistrations() {
       setTotalInDb(shData?.pagination?.totalItems ?? 0);
     }).finally(() => setLoading(false));
   }, [id]);
+
+  const sendBroadcast = async () => {
+    setShowBroadcastConfirm(false);
+    setBroadcasting(true);
+    try {
+      const res  = await fetch(`${API}/api/admin/companies/${id}/broadcast-email`, {
+        method: 'POST',
+        headers: authHeaders(),
+      });
+      const data = await res.json();
+      if (!res.ok) { showToast(data.error || 'Broadcast failed', 'error'); return; }
+      showToast(`✅ Sent to ${data.sent} recipient${data.sent !== 1 ? 's' : ''}${data.failed ? ` · ${data.failed} failed` : ''}`);
+    } catch {
+      showToast('Network error — broadcast failed', 'error');
+    } finally {
+      setBroadcasting(false);
+    }
+  };
 
   const exportCsv = (rows, filename) => {
     if (!rows.length) { showToast('No records to export', 'error'); return; }
@@ -84,9 +104,25 @@ export default function CompanyRegistrations() {
               Guests ({guestCount})
             </button>
           </div>
-          <button onClick={() => exportCsv(rows, `${tab}-${id}.csv`)} className="secondary-btn">
-            <FaDownload /> Export CSV
-          </button>
+          <div style={{ display: 'flex', gap: '.5rem' }}>
+            <button
+              onClick={() => setShowBroadcastConfirm(true)}
+              disabled={broadcasting || (regCount + guestCount === 0)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '.4rem',
+                background: '#0f3d2e', color: '#fff', border: 'none',
+                borderRadius: 8, padding: '.5rem 1rem', fontSize: '.875rem',
+                fontWeight: 600, cursor: (regCount + guestCount === 0) ? 'not-allowed' : 'pointer',
+                opacity: (regCount + guestCount === 0) ? 0.45 : 1, fontFamily: 'inherit',
+              }}
+            >
+              {broadcasting ? <span className="spinner" style={{ width: 14, height: 14 }} /> : <FaEnvelope size={13} />}
+              {broadcasting ? 'Sending…' : 'Send Meeting Links'}
+            </button>
+            <button onClick={() => exportCsv(rows, `${tab}-${id}.csv`)} className="secondary-btn">
+              <FaDownload /> Export CSV
+            </button>
+          </div>
         </div>
 
         {/* Stats row */}
@@ -127,6 +163,41 @@ export default function CompanyRegistrations() {
           </div>
         )}
       </div>
+
+      {showBroadcastConfirm && (
+        <div onClick={() => setShowBroadcastConfirm(false)} style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 10000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: '#fff', borderRadius: 16, padding: '2rem',
+            maxWidth: 420, width: '100%', boxShadow: '0 24px 64px rgba(0,0,0,.22)',
+          }}>
+            <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#f0fdf4',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              marginBottom: '1rem', fontSize: '1.4rem' }}>
+              <FaEnvelope style={{ color: '#0f3d2e' }} />
+            </div>
+            <h3 style={{ color: '#0f3d2e', marginBottom: '.5rem', fontSize: '1.05rem' }}>Send Meeting Links</h3>
+            <p style={{ color: '#64748b', fontSize: '.875rem', lineHeight: 1.6, marginBottom: '1.75rem' }}>
+              This will send the Zoom and YouTube links to all <strong>{regCount + guestCount}</strong> registered
+              participants ({regCount} shareholder{regCount !== 1 ? 's' : ''} + {guestCount} guest{guestCount !== 1 ? 's' : ''}).
+              Duplicate emails across both lists are automatically deduplicated.
+            </p>
+            <div style={{ display: 'flex', gap: '.75rem', justifyContent: 'flex-end' }}>
+              <button type="button" onClick={() => setShowBroadcastConfirm(false)} className="secondary-btn">
+                Cancel
+              </button>
+              <button type="button" onClick={sendBroadcast}
+                style={{ background: '#0f3d2e', color: '#fff', border: 'none',
+                  borderRadius: 8, padding: '.7rem 1.5rem', fontWeight: 700,
+                  fontSize: '.9rem', fontFamily: 'inherit', cursor: 'pointer' }}>
+                Yes, Send Emails
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast && (
         <div style={{

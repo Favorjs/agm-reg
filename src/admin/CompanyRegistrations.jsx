@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaDownload, FaCheck, FaUsers, FaUserCheck, FaUserTie, FaChartPie, FaEnvelope } from 'react-icons/fa';
+import { FaArrowLeft, FaDownload, FaCheck, FaUsers, FaUserCheck, FaUserTie, FaChartPie, FaEnvelope, FaSearch } from 'react-icons/fa';
 import { API } from '../context/CompanyContext';
+
+const thStyle = {
+  background: '#0f3d2e', color: '#fff', padding: '.75rem 1rem', textAlign: 'left',
+  fontSize: '.78rem', textTransform: 'uppercase', letterSpacing: '.04em',
+};
 
 function authHeaders() {
   return { Authorization: `Bearer ${localStorage.getItem('admin_token')}` };
@@ -33,6 +38,14 @@ export default function CompanyRegistrations() {
   const [broadcasting, setBroadcasting] = useState(false);
   const [showBroadcastConfirm, setShowBroadcastConfirm] = useState(false);
 
+  // Search & select individual recipients
+  const [query, setQuery]               = useState('');
+  const [results, setResults]           = useState([]);
+  const [searching, setSearching]       = useState(false);
+  const [selectedIds, setSelectedIds]   = useState(new Set());
+  const [sendingSelected, setSendingSelected] = useState(false);
+  const [showSendConfirm, setShowSendConfirm] = useState(false);
+
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
@@ -63,6 +76,63 @@ export default function CompanyRegistrations() {
       showToast('Network error — broadcast failed', 'error');
     } finally {
       setBroadcasting(false);
+    }
+  };
+
+  // Debounced fuzzy search against the full shareholder DB
+  useEffect(() => {
+    if (tab !== 'search') return;
+    if (!query.trim()) { setResults([]); setSearching(false); return; }
+    setSearching(true);
+    const t = setTimeout(async () => {
+      try {
+        const res  = await fetch(`${API}/api/admin/companies/${id}/shareholders/search?q=${encodeURIComponent(query.trim())}`, { headers: authHeaders() });
+        const data = await res.json();
+        setResults(res.ok ? (data.data || []) : []);
+      } catch { setResults([]); }
+      finally { setSearching(false); }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [query, tab, id]);
+
+  const toggleSelect = (shId) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(shId) ? next.delete(shId) : next.add(shId);
+      return next;
+    });
+  };
+
+  const toggleSelectAllResults = (checked) => {
+    const withEmail = results.filter(r => r.email).map(r => r.id);
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      withEmail.forEach(idv => checked ? next.add(idv) : next.delete(idv));
+      return next;
+    });
+  };
+
+  const sendToSelected = async () => {
+    setShowSendConfirm(false);
+    setSendingSelected(true);
+    try {
+      const res  = await fetch(`${API}/api/admin/companies/${id}/shareholders/send-email`, {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showToast(data.error || 'Send failed', 'error'); return; }
+      showToast(
+        `✅ Sent to ${data.sent} recipient${data.sent !== 1 ? 's' : ''}` +
+        `${data.failed ? ` · ${data.failed} failed` : ''}` +
+        `${data.skippedNoEmail ? ` · ${data.skippedNoEmail} skipped (no email)` : ''}`
+      );
+      setSelectedIds(new Set());
+    } catch {
+      showToast('Network error — send failed', 'error');
+    } finally {
+      setSendingSelected(false);
     }
   };
 
@@ -103,25 +173,47 @@ export default function CompanyRegistrations() {
             <button style={tabStyle('guests')} onClick={() => setTab('guests')}>
               Guests ({guestCount})
             </button>
+            <button style={tabStyle('search')} onClick={() => setTab('search')}>
+              <FaSearch size={11} style={{ marginRight: '.35rem' }} /> Search & Send
+            </button>
           </div>
           <div style={{ display: 'flex', gap: '.5rem' }}>
-            <button
-              onClick={() => setShowBroadcastConfirm(true)}
-              disabled={broadcasting || (regCount + guestCount === 0)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '.4rem',
-                background: '#0f3d2e', color: '#fff', border: 'none',
-                borderRadius: 8, padding: '.5rem 1rem', fontSize: '.875rem',
-                fontWeight: 600, cursor: (regCount + guestCount === 0) ? 'not-allowed' : 'pointer',
-                opacity: (regCount + guestCount === 0) ? 0.45 : 1, fontFamily: 'inherit',
-              }}
-            >
-              {broadcasting ? <span className="spinner" style={{ width: 14, height: 14 }} /> : <FaEnvelope size={13} />}
-              {broadcasting ? 'Sending…' : 'Send Meeting Links'}
-            </button>
-            <button onClick={() => exportCsv(rows, `${tab}-${id}.csv`)} className="secondary-btn">
-              <FaDownload /> Export CSV
-            </button>
+            {tab === 'search' ? (
+              <button
+                onClick={() => setShowSendConfirm(true)}
+                disabled={sendingSelected || selectedIds.size === 0}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '.4rem',
+                  background: '#0f3d2e', color: '#fff', border: 'none',
+                  borderRadius: 8, padding: '.5rem 1rem', fontSize: '.875rem',
+                  fontWeight: 600, cursor: selectedIds.size === 0 ? 'not-allowed' : 'pointer',
+                  opacity: selectedIds.size === 0 ? 0.45 : 1, fontFamily: 'inherit',
+                }}
+              >
+                {sendingSelected ? <span className="spinner" style={{ width: 14, height: 14 }} /> : <FaEnvelope size={13} />}
+                {sendingSelected ? 'Sending…' : `Send to Selected${selectedIds.size ? ` (${selectedIds.size})` : ''}`}
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => setShowBroadcastConfirm(true)}
+                  disabled={broadcasting || (regCount + guestCount === 0)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '.4rem',
+                    background: '#0f3d2e', color: '#fff', border: 'none',
+                    borderRadius: 8, padding: '.5rem 1rem', fontSize: '.875rem',
+                    fontWeight: 600, cursor: (regCount + guestCount === 0) ? 'not-allowed' : 'pointer',
+                    opacity: (regCount + guestCount === 0) ? 0.45 : 1, fontFamily: 'inherit',
+                  }}
+                >
+                  {broadcasting ? <span className="spinner" style={{ width: 14, height: 14 }} /> : <FaEnvelope size={13} />}
+                  {broadcasting ? 'Sending…' : 'Send Meeting Links'}
+                </button>
+                <button onClick={() => exportCsv(rows, `${tab}-${id}.csv`)} className="secondary-btn">
+                  <FaDownload /> Export CSV
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -133,7 +225,74 @@ export default function CompanyRegistrations() {
           <StatCard icon={<FaChartPie />}  label="Registration Rate"        value={`${regRate}%`} color="#8b5cf6" />
         </div>
 
-        {loading ? <p style={{ color: '#64748b' }}>Loading…</p> : (
+        {tab === 'search' ? (
+          <div style={{ background: '#fff', borderRadius: 12, padding: '1.5rem', boxShadow: '0 0 0 1px rgba(0,0,0,.06)' }}>
+            <p style={{ fontSize: '.8rem', color: '#64748b', marginTop: 0, marginBottom: '1rem' }}>
+              Fuzzy, typo-tolerant search across every shareholder in the database (not just registered ones).
+              Pick individuals below and send them the meeting links directly.
+            </p>
+            <div style={{ position: 'relative', marginBottom: '1rem' }}>
+              <FaSearch style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontSize: '.85rem' }} />
+              <input
+                autoFocus
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="Search by name, account no, or email…"
+                style={{
+                  width: '100%', padding: '.7rem .8rem .7rem 2.4rem', borderRadius: 8,
+                  border: '1px solid #e2e8f0', fontSize: '.9rem', fontFamily: 'inherit', boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            {searching && <p style={{ color: '#64748b', fontSize: '.85rem' }}>Searching…</p>}
+            {!searching && query.trim() && results.length === 0 && (
+              <p style={{ color: '#64748b', fontSize: '.85rem' }}>No shareholders match "{query.trim()}"</p>
+            )}
+            {!query.trim() && (
+              <p style={{ color: '#94a3b8', fontSize: '.85rem', textAlign: 'center', padding: '2rem 0' }}>
+                Start typing a shareholder name, account number, or email to search.
+              </p>
+            )}
+
+            {results.length > 0 && (
+              <div style={{ overflow: 'hidden', borderRadius: 8, border: '1px solid #f1f5f9' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.875rem' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ ...thStyle, width: 36 }}>
+                        <input
+                          type="checkbox"
+                          checked={results.some(r => r.email) && results.filter(r => r.email).every(r => selectedIds.has(r.id))}
+                          onChange={e => toggleSelectAllResults(e.target.checked)}
+                        />
+                      </th>
+                      <th style={thStyle}>Name</th>
+                      <th style={thStyle}>Account No</th>
+                      <th style={thStyle}>Email</th>
+                      <th style={thStyle}>Holdings</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.map(r => (
+                      <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9', opacity: r.email ? 1 : .5 }}>
+                        <td style={{ padding: '.6rem 1rem' }}>
+                          <input type="checkbox" disabled={!r.email} checked={selectedIds.has(r.id)} onChange={() => toggleSelect(r.id)} />
+                        </td>
+                        <td style={{ padding: '.6rem 1rem', color: '#1a202c' }}>{r.name}</td>
+                        <td style={{ padding: '.6rem 1rem', color: '#1a202c' }}>{r.acno}</td>
+                        <td style={{ padding: '.6rem 1rem', color: '#1a202c' }}>
+                          {r.email || <em style={{ color: '#cbd5e1' }}>no email on file</em>}
+                        </td>
+                        <td style={{ padding: '.6rem 1rem', color: '#1a202c' }}>{r.holdings ?? '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : loading ? <p style={{ color: '#64748b' }}>Loading…</p> : (
           <div style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 0 1px rgba(0,0,0,.06)' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.875rem' }}>
               <thead>
@@ -189,6 +348,39 @@ export default function CompanyRegistrations() {
                 Cancel
               </button>
               <button type="button" onClick={sendBroadcast}
+                style={{ background: '#0f3d2e', color: '#fff', border: 'none',
+                  borderRadius: 8, padding: '.7rem 1.5rem', fontWeight: 700,
+                  fontSize: '.9rem', fontFamily: 'inherit', cursor: 'pointer' }}>
+                Yes, Send Emails
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSendConfirm && (
+        <div onClick={() => setShowSendConfirm(false)} style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 10000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: '#fff', borderRadius: 16, padding: '2rem',
+            maxWidth: 420, width: '100%', boxShadow: '0 24px 64px rgba(0,0,0,.22)',
+          }}>
+            <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#f0fdf4',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              marginBottom: '1rem', fontSize: '1.4rem' }}>
+              <FaEnvelope style={{ color: '#0f3d2e' }} />
+            </div>
+            <h3 style={{ color: '#0f3d2e', marginBottom: '.5rem', fontSize: '1.05rem' }}>Send to Selected</h3>
+            <p style={{ color: '#64748b', fontSize: '.875rem', lineHeight: 1.6, marginBottom: '1.75rem' }}>
+              This will send the Zoom and YouTube links to the <strong>{selectedIds.size}</strong> shareholder{selectedIds.size !== 1 ? 's' : ''} you selected.
+            </p>
+            <div style={{ display: 'flex', gap: '.75rem', justifyContent: 'flex-end' }}>
+              <button type="button" onClick={() => setShowSendConfirm(false)} className="secondary-btn">
+                Cancel
+              </button>
+              <button type="button" onClick={sendToSelected}
                 style={{ background: '#0f3d2e', color: '#fff', border: 'none',
                   borderRadius: 8, padding: '.7rem 1.5rem', fontWeight: 700,
                   fontSize: '.9rem', fontFamily: 'inherit', cursor: 'pointer' }}>

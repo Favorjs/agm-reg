@@ -38,6 +38,7 @@ export default function CompanyRegistrations() {
   const [selectedIds, setSelectedIds]   = useState(new Set());
   const [sendingSelected, setSendingSelected] = useState(false);
   const [showSendConfirm, setShowSendConfirm] = useState(false);
+  const [sentModal, setSentModal] = useState(null); // { sent, failed, skippedNoEmail }
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
@@ -64,7 +65,7 @@ export default function CompanyRegistrations() {
       });
       const data = await res.json();
       if (!res.ok) { showToast(data.error || 'Broadcast failed', 'error'); return; }
-      showToast(`✅ Sent to ${data.sent} recipient${data.sent !== 1 ? 's' : ''}${data.failed ? ` · ${data.failed} failed` : ''}`);
+      setSentModal({ sent: data.sent, failed: data.failed, skippedNoEmail: 0 });
     } catch {
       showToast('Network error — broadcast failed', 'error');
     } finally {
@@ -91,11 +92,7 @@ export default function CompanyRegistrations() {
       });
       const data = await res.json();
       if (!res.ok) { showToast(data.error || 'Send failed', 'error'); return; }
-      showToast(
-        `✅ Sent to ${data.sent} recipient${data.sent !== 1 ? 's' : ''}` +
-        `${data.failed ? ` · ${data.failed} failed` : ''}` +
-        `${data.skippedNoEmail ? ` · ${data.skippedNoEmail} skipped (no email)` : ''}`
-      );
+      setSentModal({ sent: data.sent, failed: data.failed, skippedNoEmail: data.skippedNoEmail || 0 });
       setSelectedIds(new Set());
     } catch {
       showToast('Network error — send failed', 'error');
@@ -137,7 +134,7 @@ export default function CompanyRegistrations() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', padding: '2rem' }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
           <button onClick={() => navigate('/admin/companies')} className="secondary-btn"><FaArrowLeft /> Back</button>
           <div style={{ display: 'flex', gap: '.5rem' }}>
@@ -327,6 +324,38 @@ export default function CompanyRegistrations() {
                 Yes, Send Emails
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {sentModal && (
+        <div onClick={() => setSentModal(null)} style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 10000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: '#fff', borderRadius: 16, padding: '2rem',
+            maxWidth: 420, width: '100%', boxShadow: '0 24px 64px rgba(0,0,0,.22)', textAlign: 'center',
+          }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#f0fdf4',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 1rem', fontSize: '1.7rem', color: '#16a34a' }}>
+              <FaCheck />
+            </div>
+            <h3 style={{ color: '#0f3d2e', marginBottom: '.5rem', fontSize: '1.1rem' }}>
+              Email{sentModal.sent !== 1 ? 's' : ''} Sent Successfully
+            </h3>
+            <p style={{ color: '#64748b', fontSize: '.875rem', lineHeight: 1.6, marginBottom: '1.75rem' }}>
+              Successfully sent to <strong>{sentModal.sent}</strong> recipient{sentModal.sent !== 1 ? 's' : ''}.
+              {sentModal.failed > 0 && <> {sentModal.failed} failed to send.</>}
+              {sentModal.skippedNoEmail > 0 && <> {sentModal.skippedNoEmail} skipped (no email on file).</>}
+            </p>
+            <button type="button" onClick={() => setSentModal(null)}
+              style={{ background: '#0f3d2e', color: '#fff', border: 'none',
+                borderRadius: 8, padding: '.7rem 1.75rem', fontWeight: 700,
+                fontSize: '.9rem', fontFamily: 'inherit', cursor: 'pointer' }}>
+              Done
+            </button>
           </div>
         </div>
       )}
